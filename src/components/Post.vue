@@ -5,19 +5,29 @@
         </div>
     </div>
     <div v-else>
-        <FullPost :post="post" />
+     <FullPost :post="post" />
         <div class="d-flex dpx-16">
             <span class="title-small text-4">Comments</span>
         </div>
         <div class="list-container dpy-16">
             <div v-for="comment in comments">
-                <div v-show="comment.kind == 't1'" class="list-item-full list-item-divider dpx-16">
+                <div 
+                  v-show="comment.kind == 't1'" 
+                  class="list-item-divider dpx-16"
+                  :class="pressedComment === comment ? 'list-item' : 'list-item-full'"
+                  @mousedown="startLongPress(comment)"
+                  @mouseup="endLongPress"
+                  @touchstart="startLongPress(comment)"
+                  @touchend="endLongPress"
+                  @mouseleave="endLongPress"
+                  @touchcancel="endLongPress"
+                >
                     <div v-show="comment.depth" class="comment-depth-container">
                         <div class="comment-depth" v-for="_ in comment.depth">
                             <div class="comment-depth-line"></div>
                         </div>
                     </div>
-                    <div class="comment-body">
+                    <div class="comment-body" >
                         <div class="d-flex align-items-center dpb-4">
                             <div class="list-item-leading-icon ps-0 dpe-8">
                                 <span class="material-icons">{{ comment.author == 'AutoModerator' ? 'local_police' : 'face'
@@ -26,7 +36,7 @@
                             <span class="label-small text-10" @click.passive="open_user(comment.author)">{{
                                 comment.author }}</span>
                         </div>
-                        <span class="body-medium" v-html="markdown(comment.body)"></span>
+                        <span class="body-medium" v-show="pressedComment.get(comment.author+comment.depth) != comment.body" v-html="markdown(comment.body)"></span>
                     </div>
                 </div>
             </div>
@@ -46,6 +56,8 @@ const geddit = new Geddit();
 const post = ref(null);
 const comments = ref([]);
 const view = ref(document.querySelector('.content-view'));
+const pressedComment = ref(new Map);
+const longPressTimer = ref(null)
 
 async function setup() {
     let response = await geddit.getSubmissionComments(router.currentRoute.value.params.id);
@@ -123,4 +135,30 @@ onActivated(() => {
         view.value.scrollTop = parseInt(this_page.scroll);
     }
 })
+
+;
+
+const startLongPress = (comment) => {
+  longPressTimer.value = setTimeout(() => {
+    if (pressedComment.value.get(comment.author+comment.depth) == comment.body) {
+        pressedComment.value.delete(comment.author+comment.depth)
+      // Remove if exists
+    } else {
+        pressedComment.value.set(comment.author+comment.depth, comment.body)
+      // Add if not exists
+    }
+  }, 500);
+};
+
+const endLongPress = () => {
+  clearTimeout(longPressTimer.value);
+  longPressTimer.value = null;
+}
+
+// Add cleanup on component unmount
+onBeforeMount(() => {
+  clearTimeout(longPressTimer.value);
+})
+
+
 </script>
