@@ -12,7 +12,7 @@
         <div class="list-container dpy-16">
             <div v-for="comment in comments">
                 <div 
-                  v-show="comment.kind == 't1'" 
+                  v-show="comment.kind == 't1' && parentHidden.get(comment.author+comment.depth) != true"
                   class="list-item-divider dpx-16"
                   :class="pressedComment === comment ? 'list-item' : 'list-item-full'"
                   @mousedown="startLongPress(comment)"
@@ -57,6 +57,7 @@ const post = ref(null);
 const comments = ref([]);
 const view = ref(document.querySelector('.content-view'));
 const pressedComment = ref(new Map);
+const parentHidden = ref(new Map)
 const longPressTimer = ref(null)
 
 async function setup() {
@@ -139,13 +140,26 @@ onActivated(() => {
 ;
 
 const startLongPress = (comment) => {
+    console.log(comments)
   longPressTimer.value = setTimeout(() => {
     if (pressedComment.value.get(comment.author+comment.depth) == comment.body) {
         pressedComment.value.delete(comment.author+comment.depth)
-      // Remove if exists
+        let cutComments = comments.value.slice(comments.value.findIndex(c => c.author == comment.author && c.depth == comment.depth)+1, comments.value.length)
+        for (let c of cutComments){
+            if(c.depth == 0) return
+            if (c.depth > comment.depth){
+                parentHidden.value.delete(c.author+c.depth)
+            }     
+        }
     } else {
         pressedComment.value.set(comment.author+comment.depth, comment.body)
-      // Add if not exists
+        let cutComments = comments.value.slice(comments.value.findIndex(c => c.author == comment.author && c.depth == comment.depth)+1, comments.value.length)
+        for (let c of cutComments){
+            if(c.depth == 0) return
+            if (c.depth > comment.depth){
+                parentHidden.value.set(c.author+c.depth, true)
+            }     
+        }
     }
   }, 500);
 };
@@ -155,7 +169,6 @@ const endLongPress = () => {
   longPressTimer.value = null;
 }
 
-// Add cleanup on component unmount
 onBeforeMount(() => {
   clearTimeout(longPressTimer.value);
 })
