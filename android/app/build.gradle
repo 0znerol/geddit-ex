@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "geddit.buzl.uk"
+    namespace "geddit.ex"
     compileSdkVersion rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "geddit.buzl.uk"
+        applicationId "geddit.ex"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 7
