@@ -1,12 +1,15 @@
 <template>
-    <div v-if="!posts.length" class="d-flex justify-content-center align-items-center cover-all position-absolute">
+    <div v-if="subreddits.length && !posts.length" class="d-flex justify-content-center align-items-center cover-all position-absolute">
         <div class="d-flex circle md-background p-2">
             <div class="spinner-border text-4" role="status"></div>
         </div>
     </div>
     <TopAppBar ref="topbar" subreddit="Popular" @params_changed="params_changed" />
-    <div class="cards dpb-16">
-        <Post v-for="post in posts" :post="post.data" />
+    <div class="cards dpb-16" v-show="subreddits.length">
+        <Post v-for="post in posts" :post="post.data"/>
+    </div>
+    <div class="display-flex justify-content-center p-3" v-show="!subreddits.length">
+        <span class="title-medium text-4">Explore and follow some subreddits!</span>
     </div>
     <div v-show="!scroll_loaded" class="md-progress-container">
         <div class="md-progress">
@@ -22,7 +25,9 @@ import Post from './CompactPost.vue';
 import TopAppBar from './TopAppBar.vue';
 
 const geddit = new Geddit();
-const topbar = ref(null);
+const topbar = ref("hot");
+const subreddits = ref([]);
+const _subreddits = ref([]);
 
 const posts = ref([]);
 const after = ref(null);
@@ -30,24 +35,65 @@ const after = ref(null);
 const scroll_loaded = ref(true);
 
 async function setup() {
-    let response = await geddit.getSubmissions("hot", "popular", {
-        t: "day"
-    });
-    if (!response) return;
+    get_subreddits();
 
-    posts.value = response.posts;
-    after.value = response.after;
+    let allPosts = [];
+    if (!subreddits.value || subreddits.value.length == 0) {
+        console.log("No subreddits found");
+        return;
+    }
+    try {
+        const fetchPromises = subreddits.value.map(subreddit => 
+            geddit.getSubmissions(topbar.value.sort, subreddit.display_name, {
+                t: topbar.value.time
+            }).then(response => response.posts)
+              .catch(error => {
+                  console.error(`Error fetching posts for subreddit ${subreddit.display_name}:`, error);
+                  return []; 
+              })
+        );
+
+        const results = await Promise.all(fetchPromises);
+
+        allPosts = results.flat();
+
+        allPosts.sort((a, b) => {
+            return b.data.score - a.data.score;
+        });
+
+    } catch (error) {
+        console.error("Error during setup:", error);
+    }
+
+    posts.value = allPosts;
+    console.log(allPosts);
+}
+
+async function get_subreddits() {
+    subreddits.value = JSON.parse(localStorage.getItem("subreddits"));
+    _subreddits.value = subreddits.value;
 }
 
 async function get_posts() {
-    let response = await geddit.getSubmissions(topbar.value.sort, "popular", {
-        t: topbar.value.time
-    });
-    if (!response) return;
+    let followedSubredditsPosts = [];
+    for (const subreddit of subreddits.value) {
+        try {
+            let response = await geddit.getSubmissions(topbar.value.sort, subreddit.display_name, {
+                t: topbar.value.time
+            });
 
-    posts.value = response.posts;
-    after.value = response.after;
+            after.value = response.after;
+            followedSubredditsPosts.push(...response.posts);
+            followedSubredditsPosts.sort((a, b) => b.data.score - a.data.score);
+        } catch (error) {
+            console.error(`Error fetching posts for subreddit ${subreddit.display_name}:`, error);
+        }
+    }
+
+    posts.value = followedSubredditsPosts;
+    console.log(followedSubredditsPosts);
 }
+
 
 async function scroll() {
     scroll_loaded.value = false;
