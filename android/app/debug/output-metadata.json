@@ -5,7 +5,7 @@
     "kind": "Directory"
   },
   "applicationId": "geddit.ex",
-  "variantName": "release",
+  "variantName": "debug",
   "elements": [
     {
       "type": "SINGLE",
@@ -13,8 +13,9 @@
       "attributes": [],
       "versionCode": 7,
       "versionName": "1.7",
-      "outputFile": "app-release.apk"
+      "outputFile": "app-debug.apk"
     }
   ],
-  "elementType": "File"
+  "elementType": "File",
+  "minSdkVersionForDexing": 22
 }

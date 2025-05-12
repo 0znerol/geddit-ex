@@ -9,8 +9,17 @@ import Subreddits from '/components/Subreddits.vue';
 import Settings from '/components/Settings.vue';
 import Gallery from '/components/Gallery.vue';
 import Preview from '/components/Preview.vue';
+import Follow from '/components/Follow.vue';
 
 const routes = [
+    {
+        path: "/follow",
+        component: Follow,
+        name: "follow",
+        meta: {
+            component: "follow"
+        }
+    },
     {
         path: "/",
         component: Home,
