@@ -1,5 +1,12 @@
 <template>
     <div class="navigation-bar">
+        <div class="navigation-bar-container" @touchstart.prevent="go_follow"
+            :class="{ 'navigation-bar-active': path == '/follow' }">
+            <div class="navigation-bar-indicator">
+                <span :class="follow">bookmark_added</span>
+            </div>
+            <span class="label-medium">Following</span>
+        </div>
         <div class="navigation-bar-container" @touchstart.prevent="go_home"
             :class="{ 'navigation-bar-active': path == '/' }">
             <div class="navigation-bar-indicator">
@@ -38,6 +45,11 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const path = computed(() => router.currentRoute.value.path);
 
+const follow = computed(() => ({
+    'material-icons': path.value == '/follow',
+    'material-icons-outlined': path.value != '/follow',
+}))
+
 const home = computed(() => ({
     'material-icons': path.value == '/',
     'material-icons-outlined': path.value != '/',
@@ -57,6 +69,19 @@ const settings = computed(() => ({
     'material-icons': path.value == '/settings',
     'material-icons-outlined': path.value != '/settings',
 }))
+
+async function go_follow() {
+    if (router.currentRoute.value.path == '/follow') {
+        // Scroll to top
+        let view = document.querySelector('.content-view');
+        view.scroll({
+            top: 0,
+            behavior: 'smooth'
+        })
+        return
+    }
+    router.push('/follow');
+}
 
 async function go_home() {
     if (router.currentRoute.value.path == '/') {

@@ -1,5 +1,5 @@
 {
-  "name": "geddit-app",
+  "name": "geddit-ex-app",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",

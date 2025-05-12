@@ -1,4 +1,4 @@
-package geddit.buzl.uk;
+package geddit.ex;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,6 +1,6 @@
 {
-  "appId": "geddit.buzl.uk",
-  "appName": "Geddit",
+  "appId": "geddit.ex",
+  "appName": "Geddit_Ex",
   "webDir": "src/dist",
   "server": {
     "androidScheme": "https"
