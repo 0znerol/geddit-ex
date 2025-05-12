@@ -88,9 +88,38 @@ async function get_subreddits() {
   _subreddits.value = subreddits.value;
 }
 
+function mergeSortedPosts(sortedArrays, comparator) {
+  const pointers = Array(sortedArrays.length).fill(0);
+  const result = [];
+
+  while (true) {
+    let bestPost = null;
+    let bestIndex = -1;
+
+    for (let i = 0; i < sortedArrays.length; i++) {
+      const j = pointers[i];
+      if (j < sortedArrays[i].length) {
+        const currentPost = sortedArrays[i][j];
+        if (bestPost === null || comparator(currentPost, bestPost) < 0) {
+          bestPost = currentPost;
+          bestIndex = i;
+        }
+      }
+    }
+    if (bestIndex === -1) {
+      break;
+    }
+    result.push(bestPost);
+    pointers[bestIndex]++;
+  }
+
+  return result;
+}
+
 async function get_posts() {
   get_subreddits();
   let allPosts = [];
+  let af = null;
   if (!subreddits.value || subreddits.value.length == 0) {
     console.log("No subreddits found");
     return;
@@ -103,7 +132,8 @@ async function get_posts() {
           t: topbar.value.time,
         })
         .then((response) => {
-          response.posts;
+          af = response.after;
+          return response.posts;
         })
         .catch((error) => {
           console.error(
@@ -113,19 +143,16 @@ async function get_posts() {
           return [];
         })
     );
-
+    console.log("fetchPromises: ", fetchPromises);
     const results = await Promise.all(fetchPromises);
-
-    allPosts = results.flat();
-    console.log(allPosts);
-    allPosts.sort((a, b) => {
-      return b.data.score - a.data.score;
-    });
+    const comparator = (a, b) => b.data.ups - a.data.ups; // descending
+    const allPosts = mergeSortedPosts(results, comparator);
   } catch (error) {
     console.error("Error during setup:", error);
   }
 
   posts.value = allPosts;
+  after.value = af;
 }
 
 async function scroll() {
@@ -190,4 +217,3 @@ onDeactivated(() => {
   view.removeEventListener("scroll", scroll_handle);
 });
 </script>
-
